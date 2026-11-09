@@ -1,0 +1,18 @@
+POWER BI IMPACT ANALYZER - VERSION HISTORY
+
+Version 0.9 - Initial public baseline
+- Packaged the validated 0.8.1 development state for initial publication.
+- Standardized the script header, report header, and exported report filename to version 0.9.
+- Preserved the existing dependency graph, BFS, DFS, diagnostics, and synthetic test logic.
+- Discovers tables, columns, and measures dynamically.
+- Skips Power BI internal CalculatedTable objects.
+- Documents the current dependency extraction scope and known limitations.
+- Initial validation completed on one test model in the recorded environment.
+- Validation against a second structurally different model remains outstanding.
+
+Development baseline 0.8.1
+- Expanded inventory discovery to include all model tables, columns, and measures.
+- Added discovered-object counters and inventory reporting.
+- Excluded Power BI internal CalculatedTable objects from user-table inventory.
+- Confirmed zero unknown dependency types, missing owners, key collisions, and invalid graph endpoints in the recorded test run.
+- BFS/DFS consistency checks and synthetic key, cycle, and path-limit checks passed in the recorded test run.

@@ -1,0 +1,8 @@
+# Generated impact-analysis reports
+ImpactAnalysis_Logs/
+*.log
+*.tmp
+
+# Local editor / operating-system files
+.DS_Store
+Thumbs.db
