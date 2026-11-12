@@ -1,56 +1,108 @@
 # Power BI Impact Analyzer
 
-A model-agnostic dependency inventory and impact-analysis script for Power BI semantic models, designed to run in **Tabular Editor 2**.
+A [Tabular Editor 2](https://github.com/TabularEditor/TabularEditor) script that answers one question before you change a model:
 
-## Initial public baseline
+> **If I change this measure, column or table, what else is affected?**
 
-**Version:** 0.9  
-**Script:** `ImpactAnalyzer_Dynamic_v0.9.csx`
+The script reads the dependency information of the connected semantic model, builds a dependency graph, and reports, for every table, column and measure, everything that depends on it, directly or indirectly, with the dependency level and the shortest dependency path.
 
-This release packages the validated 0.8.1 development state with consistent 0.9 release metadata. The dependency-analysis logic has not been intentionally changed as part of this packaging step.
+**Version:** 1.0  
+**Script:** `ImpactAnalyzer.csx`
 
-## Current capabilities
+## What you get
 
-- Discovers model tables, columns, and measures dynamically.
-- Excludes Power BI internal objects whose runtime type is `CalculatedTable`.
-- Builds dependency edges from dependencies exposed by `Model.AllMeasures` and `Measure.DependsOn`.
-- Uses object type, owner, and object name to construct distinct registry keys.
-- Runs breadth-first search (BFS) to report impact levels.
-- Runs depth-first search (DFS) to enumerate simple impact paths, with a configurable path limit.
-- Performs graph endpoint, registry, and BFS/DFS consistency checks.
-- Includes synthetic checks for key boundaries, cycles, and DFS path-limit enforcement.
-- Exports a timestamped text report to the user's Desktop under `ImpactAnalysis_Logs`.
+Each run creates one folder, `Desktop\ImpactAnalysis\Run_<timestamp>\`, with two files:
 
-## Compatibility and tested environment
+| File | Purpose |
+| --- | --- |
+| `ImpactReport_<model>.html` | Self-contained interactive report. Open it in any browser. |
+| `ImpactReport_<model>.csv` | Flat table for Excel or Power BI: one row per (target, affected object). |
 
-The development validation recorded for this baseline used:
+**HTML report**
 
-- Power BI Desktop RS — September 2026
-- Tabular Editor — 2.29.0
-- DAX Studio — 3.6.0
+- **Explorer tab:** search any measure, column or table, filter by type, and optionally hide objects without dependents. Selecting an object shows what it depends on directly, its structural references (relationships, sort-by), and every affected object with its level and shortest path.
+- **Paths & log tab:** the full dependency paths for the objects you selected before running the script, plus the run log (inventory, graph statistics, warnings, skipped objects).
 
-The script uses Tabular Editor's model object APIs. Compatibility with other Tabular Editor or Power BI versions has not yet been established.
+**CSV columns**
+
+| Column | Meaning |
+| --- | --- |
+| `Target` | The object you would change, e.g. `Sales[Amount]` |
+| `TargetType` | `Measure`, `Column` or `Table` |
+| `TotalAffected` | Number of objects affected by changing the target (direct and indirect) |
+| `Affected` | One affected object |
+| `AffectedType` | Type of the affected object |
+| `Level` | `1` = depends directly on the target, `2` = depends on a level-1 object, and so on |
+| `ShortestPath` | Shortest dependency chain from the target to the affected object |
+
+Objects that nothing in the model depends on are still listed, with one row and an empty `Affected` column, so they can be filtered easily.
+
+## What is analyzed
+
+| Source | Covered |
+| --- | --- |
+| Measures (DAX) | Yes |
+| Calculated columns (DAX) | Yes |
+| Calculated tables (DAX) and the columns they generate | Yes |
+| Sort-by-column links | Yes |
+| Relationships | Reported as notes on the columns that use them (not as graph edges) |
+
+Skipped on purpose: Power BI auto date/time tables (`LocalDateTable_*`, `DateTableTemplate_*`) and `RowNumber` columns.
+
+## Requirements
+
+- Tabular Editor 2 (free)
+- A model to connect to: a Power BI Desktop model, or an SSAS Tabular / Azure Analysis Services database
 
 ## How to run
 
-1. Open the target Power BI model in Power BI Desktop.
-2. Open the model in Tabular Editor 2.
-3. Open `ImpactAnalyzer_Dynamic_v0.9.csx` in the Advanced Scripting editor.
-4. Execute the script.
-5. Review the report displayed by Tabular Editor.
-6. Find the exported report in `Desktop/ImpactAnalysis_Logs`.
+1. Open the model in Power BI Desktop and connect Tabular Editor 2 to it (for example through *External Tools*).
+2. In Tabular Editor 2, open the **Advanced Scripting** tab and load `ImpactAnalyzer.csx`.
+3. *(Optional)* Select one or more measures, columns or tables in the model tree before running. Their full dependency paths will appear in the **Paths & log** tab.
+4. Run the script. The HTML report opens automatically when the export is finished.
 
-The script does not require table, column, measure, PBIX, or database names to be configured in its core logic.
+### Power BI report connected live to SSAS
+
+A PBIX that is connected live to SSAS does not contain the model, so Tabular Editor 2 shows *"This instance does not contain any databases"* when launched from Power BI Desktop. Connect directly to the SSAS database instead: **File → Open → From DB**, enter the server, choose the database, then run the script.
+
+The analysis then covers the SSAS model itself. Measures defined only inside the report (report-level measures) are not part of that model and are not seen.
+
+## Settings
+
+Settings are variables at the top of the script.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `cfgDebug` | `false` | Run built-in synthetic self tests and add the results to the log tab |
+| `cfgMaxPaths` | `2000` | Maximum number of DFS paths listed per selected target |
+| `cfgDfsTargets` | empty | Objects to list full paths for, e.g. `"Sales[Total Sales]"` (in addition to the tree selection) |
+| `cfgExportHtml` | `true` | Create the HTML report |
+| `cfgExportCsv` | `true` | Create the CSV file |
+| `cfgOpenFolder` | `true` | Open the report when finished |
+| `cfgOutputRoot` | empty | Output folder. Empty = `Desktop\ImpactAnalysis` |
+
+## How it works
+
+- Every table, column and measure becomes a node. Keys are built from object type, owner and name, so objects with similar names cannot collide.
+- An edge points from a dependency to the object that depends on it, using the dependency information that Tabular Editor exposes for measures, calculated columns and calculated tables.
+- A breadth-first search from each object gives all affected objects, their level and the shortest path.
+- A depth-first search lists complete dependency paths, only for the objects you select, with a configurable path limit.
 
 ## Scope and known limitations
 
-- The dependency graph is based on dependencies exposed through `Measure.DependsOn`.
-- The inventory discovers tables, columns, and measures, but inventory discovery does not imply that every discovered object type has dependency edges.
-- This release does **not** claim complete dependency coverage for every semantic-model expression type. In particular, dependencies expressed through calculated-column M expressions are outside the current graph extraction scope.
-- Power BI internal `CalculatedTable` objects are intentionally skipped rather than classified as user tables.
-- The initial validation was performed on one test model. A second, structurally different model is still needed to strengthen the model-agnostic validation claim.
-- Synthetic tests validate selected graph behaviors; they do not prove that every real-world model edge case is covered.
+- **Model level only.** Tabular Editor sees the semantic model, not the report. These are **not** analyzed: report visuals, filters, bookmarks and conditional formatting; row-level security filter expressions; calculation items; KPIs; Power Query (M) lineage.
+- "No dependents" means that no other object **in the model** depends on it. It does not mean the object is unused in report visuals, so check the report before deleting anything.
+- Relationships are listed as notes and are not followed as dependency edges.
+- Objects or expressions for which Tabular Editor does not expose dependency information are listed in the log tab (unknown types and warnings) instead of being silently ignored.
+- Very large models produce large reports: the size grows with the number of (object, affected object) pairs.
 
-## Release status
+## Validation status
 
-This is an initial public baseline, not a claim of universal production validation. Further model testing and feature work should be released as subsequent versions, with changes recorded in `Version_History.txt`.
+Tested on two Import-mode Power BI models and one model connected live to SSAS. The built-in synthetic tests (`cfgDebug = true`) cover key boundaries, cycle detection, DFS path limits and BFS/DFS consistency. This is not a claim of universal validation: other Tabular Editor or Power BI versions, and models with unusual structures, have not been verified. Issues and feedback are welcome.
+
+<!--
+Screenshots: after uploading the images to the repository, uncomment and adjust the paths.
+
+![Explorer tab](docs/report-explorer.png)
+![Paths and log tab](docs/report-paths-log.png)
+-->
