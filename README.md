@@ -17,7 +17,7 @@ Each run creates one folder, `Desktop\ImpactAnalysis\Run_<timestamp>\`, with two
 | --- | --- |
 | `ImpactReport_<model>.html` | Self-contained interactive report. Open it in any browser. |
 | `ImpactReport_<model>.csv` | Flat table for Excel or Power BI: one row per (target, affected object). |
-
+<img src="html_sample.JPG" alt="Impact Analyzer HTML report" width="900">
 **HTML report**
 
 - **Explorer tab:** search any measure, column or table, filter by type, and optionally hide objects without dependents. Selecting an object shows what it depends on directly, its structural references (relationships, sort-by), and every affected object with its level and shortest path.
