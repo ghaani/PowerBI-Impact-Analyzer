@@ -1,18 +1,25 @@
 POWER BI IMPACT ANALYZER - VERSION HISTORY
 
-Version 0.9 - Initial public baseline
-- Packaged the validated 0.8.1 development state for initial publication.
-- Standardized the script header, report header, and exported report filename to version 0.9.
-- Preserved the existing dependency graph, BFS, DFS, diagnostics, and synthetic test logic.
-- Discovers tables, columns, and measures dynamically.
-- Skips Power BI internal CalculatedTable objects.
-- Documents the current dependency extraction scope and known limitations.
-- Initial validation completed on one test model in the recorded environment.
-- Validation against a second structurally different model remains outstanding.
+Version 1.0 - First public release
 
-Development baseline 0.8.1
-- Expanded inventory discovery to include all model tables, columns, and measures.
-- Added discovered-object counters and inventory reporting.
-- Excluded Power BI internal CalculatedTable objects from user-table inventory.
-- Confirmed zero unknown dependency types, missing owners, key collisions, and invalid graph endpoints in the recorded test run.
-- BFS/DFS consistency checks and synthetic key, cycle, and path-limit checks passed in the recorded test run.
+Analysis
+- Builds a dependency graph of the connected model and reports, for every table, column and measure, all objects affected by a change (direct and indirect), with level and shortest path.
+- Dependency sources: measures, calculated columns, calculated tables (and the columns they generate) and sort-by-column links.
+- Relationships are reported as notes on the columns that use them.
+- Skips Power BI auto date/time tables (LocalDateTable_*, DateTableTemplate_*) and RowNumber columns. User-defined calculated tables are kept.
+- Objects with no dependents are reported with impact 0 instead of being omitted.
+- Full DFS paths are listed only for the objects selected in the model tree (or named in cfgDfsTargets), with a configurable path limit.
+- Registry keys are built from object type, owner and name; key collisions, unknown object types and graph endpoint problems are reported in the log.
+
+Output
+- One folder per run: Desktop\ImpactAnalysis\Run_<timestamp>\
+- ImpactReport_<model>.html: searchable report with an Explorer tab and a Paths & log tab.
+- ImpactReport_<model>.csv: one row per (target, affected object) with level and shortest path.
+
+Settings
+- cfgDebug, cfgMaxPaths, cfgDfsTargets, cfgExportHtml, cfgExportCsv, cfgOpenFolder, cfgOutputRoot (see README).
+- Synthetic self tests (key boundaries, cycles, path limit, BFS/DFS consistency) run only when cfgDebug = true and are written to the log tab.
+
+Validation
+- Tested on two Import-mode Power BI models and one model connected live to SSAS (connected directly through File > Open > From DB).
+- Not covered by the analysis: report visuals and filters, RLS expressions, calculation items, KPIs, Power Query (M) lineage.
