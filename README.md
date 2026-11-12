@@ -100,6 +100,6 @@ Settings are variables at the top of the script.
 
 ## Validation status
 
-Tested on two Import-mode Power BI models and one model connected live to SSAS. The built-in synthetic tests (`cfgDebug = true`) cover key boundaries, cycle detection, DFS path limits and BFS/DFS consistency. This is not a claim of universal validation: other Tabular Editor or Power BI versions, and models with unusual structures, have not been verified. Issues and feedback are welcome.
+Tested on two Import-mode Power BI models and one model connected live to SSAS, using Tabular Editor 2.29 and Power BI Desktop(September 2026). The built-in synthetic tests (`cfgDebug = true`) cover key boundaries, cycle detection, DFS path limits and BFS/DFS consistency. This is not a claim of universal validation: other Tabular Editor or Power BI versions, and models with unusual structures, have not been verified. Issues and feedback are welcome.
 
 
