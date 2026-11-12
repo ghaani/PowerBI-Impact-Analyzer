@@ -18,6 +18,8 @@ Each run creates one folder, `Desktop\ImpactAnalysis\Run_<timestamp>\`, with two
 | `ImpactReport_<model>.html` | Self-contained interactive report. Open it in any browser. |
 | `ImpactReport_<model>.csv` | Flat table for Excel or Power BI: one row per (target, affected object). |
 <img src="html_sample.JPG" alt="Impact Analyzer HTML report" width="900">
+<img src="csv_sample.JPG" alt="Impact Analyzer HTML report" width="900">
+
 **HTML report**
 
 - **Explorer tab:** search any measure, column or table, filter by type, and optionally hide objects without dependents. Selecting an object shows what it depends on directly, its structural references (relationships, sort-by), and every affected object with its level and shortest path.
@@ -100,9 +102,4 @@ Settings are variables at the top of the script.
 
 Tested on two Import-mode Power BI models and one model connected live to SSAS. The built-in synthetic tests (`cfgDebug = true`) cover key boundaries, cycle detection, DFS path limits and BFS/DFS consistency. This is not a claim of universal validation: other Tabular Editor or Power BI versions, and models with unusual structures, have not been verified. Issues and feedback are welcome.
 
-<!--
-Screenshots: after uploading the images to the repository, uncomment and adjust the paths.
 
-![Explorer tab](docs/report-explorer.png)
-![Paths and log tab](docs/report-paths-log.png)
--->
